@@ -32,14 +32,14 @@ class Variable:
 
 class HLMRF(Inference):
     
-    def __init__(self, eta=1.0, epsilon_abs=1e-8, epsilon_rel=1e-3, max_iter=25000, logger=None):
+    def __init__(self, eta=1.0, epsilon_abs=1e-8, epsilon_rel=1e-3, max_iter=25000):
         super(HLMRF, self).__init__()
         self.eta = eta
         self.epsilon_abs = epsilon_abs
         self.epsilon_rel = epsilon_rel
         self.max_iter = max_iter
 
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
         
         self.pots = {}
         self.vars = set()

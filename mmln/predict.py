@@ -1,3 +1,4 @@
+import logging
 import sklearn.metrics
 
 import mmln
@@ -12,20 +13,23 @@ class Predictor:
         self.all_labels = mmln.get_all_labels(network)
         self.predict_done = False
 
+        self.logger = logging.getLogger(__name__)
+
     def predict(self, model, inf=mmln.infer.HLMRF()):
-        # Initializes inference
+        self.logger.info('Starting prediction. Setting up inference.')
         manager = mmln.ground.GroundingManager(model, self.n, self.all_labels, inf)
         manager.set_all_potentials()
 
-        # Runs inference
+        self.logger.info('Inference set up. Starting inference.')
         inf.infer()
 
-        # Stores the results
+        self.logger.info('Inference done. Collecting the results.')
         for node in self.n.nodes():
             if mmln.TARGETS in self.n.node[node]:
                 for label in self.n.node[node][mmln.TARGETS]:
                     self.n.node[node][mmln.TARGETS][label] = manager.get_value(node, label)
 
+        self.logger.info('Prediction done.')
         self.predict_done = True
 
     def get_per_label_predictions(self):
