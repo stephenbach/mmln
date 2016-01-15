@@ -32,13 +32,13 @@ class GroundingManager:
         else:
             raise Exception('(' + node + ', ' + label + ') is not a target.')
 
-    def set_all_potentials(self):
-        self.logger.info('Setting all potentials. Starting with regularization.')
+    def add_all_weights(self):
+        self.logger.info('Adding all weights. Starting with regularization.')
         for var in self.variables.values():
-            self.inf.set_potential(self.m.regularization, 1, var, -0.5, two_sided=True, squared=True)
+            self.inf.add_weight(self.m.regularization, 1, var, -0.5, two_sided=True, squared=True)
 
-        self.logger.info('Set ' + str(len(self.variables)) + ' regularization potentials. ' +
-                         'Starting intra-node potentials.')
+        self.logger.info('Added ' + str(len(self.variables)) + ' regularization weights. ' +
+                         'Starting intra-node weights.')
         pots_set = 0
         for label_pair, weight in self.m.intra_node_pos.items():
             l1 = label_pair[0]
@@ -46,25 +46,25 @@ class GroundingManager:
 
             for node in self.label_map[l1]:
                 var = self.variables[(node, l1)]
-                if l2 in self.n.node[node][mmln.TARGETS]:
+                if mmln.TARGETS in self.n.node[node] and l2 in self.n.node[node][mmln.TARGETS]:
                     other_var = self.variables[(node, l2)]
-                    self.inf.set_potential(weight, (1, -1), (var, other_var), 0, squared=True)
+                    self.inf.add_weight(weight, (1, -1), (var, other_var), 0, squared=True)
                     pots_set += 1
-                elif l2 in self.n.node[node][mmln.OBSVS]:
+                elif mmln.OBSVS in self.n.node[node] and l2 in self.n.node[node][mmln.OBSVS]:
                     obsv = self.n.node[node][mmln.OBSVS][l2]
-                    self.inf.set_potential(weight, 1, var, -1 * obsv, squared=True)
+                    self.inf.add_weight(weight, 1, var, -1 * obsv, squared=True)
                     pots_set += 1
 
             # Gets the dependencies we missed: (node, l2) where (node, l1) is observed (explicitly or implicitly)
             for node in self.label_map[l2]:
-                if l1 in self.n.node[node][mmln.OBSVS]:
+                if mmln.OBSVS in self.n.node[node] and l1 in self.n.node[node][mmln.OBSVS]:
                     other_var = self.variables[(node, l2)]
                     obsv = self.n.node[node][mmln.OBSVS][l1]
-                    self.inf.set_potential(weight, -1, other_var, obsv, squared=True)
+                    self.inf.add_weight(weight, -1, other_var, obsv, squared=True)
                     pots_set += 1
 
-        self.logger.info('Set ' + str(pots_set) + ' intra-node potentials. ' +
-                         'Starting non-default inter-node potentials.')
+        self.logger.info('Added ' + str(pots_set) + ' intra-node weights. ' +
+                         'Starting non-default inter-node weights.')
         pots_set = 0
         for label_pair, weight in self.m.inter_node_pos.items():
             l1 = label_pair[0]
@@ -73,26 +73,26 @@ class GroundingManager:
             for node in self.label_map[l1]:
                 var = self.variables[(node, l1)]
                 for other_node in self.n.neighbors(node):
-                    if l2 in self.n.node[other_node][mmln.TARGETS]:
+                    if mmln.TARGETS in self.n.node[other_node] and l2 in self.n.node[other_node][mmln.TARGETS]:
                         other_var = self.variables[(other_node, l2)]
-                        self.inf.set_potential(weight, (1, -1), (var, other_var), 0, squared=True)
+                        self.inf.add_weight(weight, (1, -1), (var, other_var), 0, squared=True)
                         pots_set += 1
-                    elif l2 in self.n.node[other_node][mmln.OBSVS]:
+                    elif mmln.OBSVS in self.n.node[other_node] and l2 in self.n.node[other_node][mmln.OBSVS]:
                         obsv = self.n.node[other_node][mmln.OBSVS][l2]
-                        self.inf.set_potential(weight, 1, var, -1 * obsv, squared=True)
+                        self.inf.add_weight(weight, 1, var, -1 * obsv, squared=True)
                         pots_set += 1
 
             # Gets the dependencies we missed: (other_node, l2) where (node, l1) is observed
             for other_node in self.label_map[l2]:
                 other_var = self.variables[(other_node, l2)]
                 for node in self.n.neighbors(other_node):
-                    if l1 in self.n.node[node][mmln.OBSVS]:
+                    if mmln.OBSVS in self.n.node[node] and l1 in self.n.node[node][mmln.OBSVS]:
                         obsv = self.n.node[node][mmln.OBSVS][l1]
-                        self.inf.set_potential(weight, -1, other_var, obsv, squared=True)
+                        self.inf.add_weight(weight, -1, other_var, obsv, squared=True)
                         pots_set += 1
 
-        self.logger.info('Set ' + str(pots_set) + ' non-default inter-node potentials. ' +
-                         'Starting default inter-node potentials.')
+        self.logger.info('Added ' + str(pots_set) + ' non-default inter-node weights. ' +
+                         'Starting default inter-node weights.')
         pots_set = 0
         weight = self.m.inter_node_pos_same_label_default
         for label in self.all_labels:
@@ -100,15 +100,15 @@ class GroundingManager:
                 for node in self.label_map[label]:
                     var = self.variables[(node, label)]
                     for other_node in self.n.neighbors(node):
-                        if label in self.n.node[other_node][mmln.TARGETS]:
+                        if mmln.TARGETS in self.n.node[other_node] and label in self.n.node[other_node][mmln.TARGETS]:
                             other_var = self.variables[(other_node, label)]
-                            self.inf.set_potential(weight, (1, -1), (var, other_var), 0, squared=True)
+                            self.inf.add_weight(weight, (1, -1), (var, other_var), 0, squared=True)
                             pots_set += 1
-                        elif label in self.n.node[other_node][mmln.OBSVS]:
+                        elif mmln.OBSVS in self.n.node[other_node] and label in self.n.node[other_node][mmln.OBSVS]:
                             obsv = self.n.node[other_node][mmln.OBSVS][label]
-                            self.inf.set_potential(weight, 1, var, -1 * obsv, squared=True)
-                            self.inf.set_potential(weight, -1, var, obsv, squared=True)
+                            self.inf.add_weight(weight, 1, var, -1 * obsv, squared=True)
+                            self.inf.add_weight(weight, -1, var, obsv, squared=True)
                             pots_set += 2
 
-        self.logger.info('Set ' + str(pots_set) + ' default inter-node potentials. ' +
-                         'Done setting potentials.')
+        self.logger.info('Added ' + str(pots_set) + ' default inter-node weights. ' +
+                         'Done adding weights.')

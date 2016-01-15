@@ -15,10 +15,12 @@ class Predictor:
 
         self.logger = logging.getLogger(__name__)
 
-    def predict(self, model, inf=mmln.infer.HLMRF()):
+    def predict(self, model, inf=None):
         self.logger.info('Starting prediction. Setting up inference.')
+        if inf is None:
+            inf = mmln.infer.HLMRF()
         manager = mmln.ground.GroundingManager(model, self.n, self.all_labels, inf)
-        manager.set_all_potentials()
+        manager.add_all_weights()
 
         self.logger.info('Inference set up. Starting inference.')
         inf.infer()

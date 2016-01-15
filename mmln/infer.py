@@ -6,8 +6,19 @@ class Inference:
 
     def __init__(self):
         pass
-    
-    def set_potential(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
+
+    def add_weight(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
+        current_weight = self.get_weight(coefficients, variables, constant, two_sided, squared)
+        self.set_weight(current_weight + weight, coefficients, variables, constant, two_sided, squared)
+
+    def subtract_weight(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
+        current_weight = self.get_weight(coefficients, variables, constant, two_sided, squared)
+        self.set_weight(current_weight - weight, coefficients, variables, constant, two_sided, squared)
+
+    def set_weight(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
+        raise NotImplementedError('This class is abstract.')
+
+    def get_weight(self, coefficients, variables, constant, two_sided=False, squared=False):
         raise NotImplementedError('This class is abstract.')
     
     def infer(self):
@@ -16,15 +27,14 @@ class Inference:
 
 class Variable:
 
+    __slots__ = ('id', 'value')
+
     _counter = 1
 
-    def __init__(self, id=None):
+    def __init__(self, var_id=None):
         self.value = 0
-        self.id = id if id is not None else 'Internal ID #' + str(Variable._counter)
+        self.id = var_id if var_id is not None else 'Internal ID #' + str(Variable._counter)
         Variable._counter += 1
-
-    def __repr__(self):
-        return str(self)
 
     def __str__(self):
         return 'Variable<' + str(self.id) + '>'
@@ -45,7 +55,7 @@ class HLMRF(Inference):
         self.vars = set()
         self.needs_init = True
 
-    def set_potential(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
+    def set_weight(self, weight, coefficients, variables, constant, two_sided=False, squared=False):
         if isinstance(coefficients, (int, float)):
             coefficients = (coefficients,)
         if isinstance(variables, Variable):
@@ -82,6 +92,20 @@ class HLMRF(Inference):
                 raise Exception('Only potentials on one or two variables are supported.')
         else:
             self.pots[key].weight = weight
+
+    def get_weight(self, coefficients, variables, constant, two_sided=False, squared=False):
+        if isinstance(coefficients, (int, float)):
+            coefficients = (coefficients,)
+        if isinstance(variables, Variable):
+            variables = (variables,)
+
+        if not squared:
+            raise NotImplementedError('Only squared potentials are currently supported.')
+        if len(coefficients) != len(variables):
+            raise Exception('Must provide the same number of coefficients and variables.')
+
+        key = (coefficients, variables, constant, two_sided, squared)
+        return self.pots[key].weight if key in self.pots else 0
 
     def infer(self):
         self.logger.info('Starting optimization with ' + str(len(self.vars)) + ' variables and ' +
@@ -160,6 +184,8 @@ class HLMRF(Inference):
 
 
 class _ADMMPotential:
+
+    __slots__ = ('admm', 'weight')
     
     def __init__(self, admm, weight):
         self.admm = admm
@@ -191,6 +217,8 @@ class _ADMMPotential:
 
 
 class _ADMMOneVarBowlPotential(_ADMMPotential):
+
+    __slots__ = ('coeff', 'var', 'const', 'local_copy', 'lagrange')
 
     def __init__(self, admm, weight, coeff, var, const):
         super(_ADMMOneVarBowlPotential, self).__init__(admm, weight)
@@ -230,6 +258,8 @@ class _ADMMOneVarBowlPotential(_ADMMPotential):
 
 class _ADMMOneVarHingePotential(_ADMMOneVarBowlPotential):
 
+    __slots__ = ()
+
     def optimize_local_copies(self):
         self.local_copy = self.var.value - self.lagrange / self.admm.eta
         if self.coeff * self.local_copy + self.const > 0:
@@ -237,6 +267,8 @@ class _ADMMOneVarHingePotential(_ADMMOneVarBowlPotential):
 
 
 class _ADMMTwoVarBowlPotential(_ADMMPotential):
+
+    __slots__ = ('coeff1', 'var1', 'coeff2', 'var2', 'const', 'local_copy1', 'local_copy2', 'lagrange1', 'lagrange2')
 
     def __init__(self, admm, weight, coeff1, var1, coeff2, var2, const):
         super(_ADMMTwoVarBowlPotential, self).__init__(admm, weight)
@@ -300,6 +332,8 @@ class _ADMMTwoVarBowlPotential(_ADMMPotential):
 
 
 class _ADMMTwoVarHingePotential(_ADMMTwoVarBowlPotential):
+
+    __slots__ = ()
 
     def optimize_local_copies(self):
         self.local_copy1 = self.var1.value - self.lagrange1 / self.admm.eta
