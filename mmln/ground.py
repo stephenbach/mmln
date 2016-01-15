@@ -106,9 +106,15 @@ class GroundingManager:
                             pots_set += 1
                         elif mmln.OBSVS in self.n.node[other_node] and label in self.n.node[other_node][mmln.OBSVS]:
                             obsv = self.n.node[other_node][mmln.OBSVS][label]
-                            self.inf.add_weight(weight, 1, var, -1 * obsv, squared=True)
-                            self.inf.add_weight(weight, -1, var, obsv, squared=True)
-                            pots_set += 2
+                            if obsv == 0:
+                                self.inf.add_weight(weight, 1, var, -1 * obsv, squared=True)
+                                pots_set += 1
+                            elif obsv == 1:
+                                self.inf.add_weight(weight, -1, var, obsv, squared=True)
+                                pots_set += 1
+                            else:
+                                self.inf.add_weight(weight, 1, var, -1 * obsv, two_sided=True, squared=True)
+                                pots_set += 1
 
         self.logger.info('Added ' + str(pots_set) + ' default inter-node weights. ' +
                          'Done adding weights.')

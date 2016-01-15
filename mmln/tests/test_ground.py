@@ -11,7 +11,7 @@ class TestGroundingManager(TestCase):
     label1 = 'Label 1'
     label2 = 'Label 2'
 
-    def test_set_all_potentials1(self):
+    def test_add_all_weights(self):
         model = mmln.Model()
 
         net = nx.Graph()
@@ -38,8 +38,8 @@ class TestGroundingManager(TestCase):
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1, self.label2}, inf)
         manager.add_all_weights()
-        self.assertEqual(len(inf.pots), 14)
-        self.assertEqual(inf.set_weight_count, 14)
+        self.assertEqual(len(inf.pots), 12)
+        self.assertEqual(inf.set_weight_count, 12)
 
         model.inter_node_pos[(self.label1, self.label1)] = 1
         model.inter_node_pos[(self.label2, self.label2)] = 2
@@ -59,7 +59,7 @@ class TestGroundingManager(TestCase):
         self.assertEqual(len(inf.pots), 18)
         self.assertEqual(inf.set_weight_count, 18)
 
-    def test_set_all_potentials2(self):
+    def test_add_all_weights2(self):
         model = mmln.Model()
 
         net = nx.Graph()
@@ -78,10 +78,10 @@ class TestGroundingManager(TestCase):
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1}, inf)
         manager.add_all_weights()
-        self.assertEqual(len(inf.pots), 8)
-        self.assertEqual(inf.set_weight_count, 8)
+        self.assertEqual(len(inf.pots), 6)
+        self.assertEqual(inf.set_weight_count, 6)
 
-    def test_set_all_potentials3(self):
+    def test_add_all_weights3(self):
         model = mmln.Model()
 
         net = nx.Graph()
