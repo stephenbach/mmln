@@ -84,3 +84,45 @@ def get_all_labels(net):
             for label in net.node[node][mmln.TARGETS]:
                 all_labels.add(label)
     return all_labels
+
+
+def prune_labels(net, labels_to_keep):
+    for collection in (mmln.OBSVS, mmln.TARGETS, mmln.TRUTH):
+        for node in net.nodes():
+            if collection in net.node[node]:
+                for label in set(net.node[node][collection].keys()).difference(labels_to_keep):
+                    del net.node[node][collection][label]
+
+
+def count_labels(net, label, collections=(mmln.OBSVS,)):
+    count = 0
+    for collection in collections:
+        for node in net.nodes():
+            if label in net.node[node][collection]:
+                count += 1
+    return count
+
+
+def count_coocurring_intra_node_labels(net, label1, label2, collections=(mmln.OBSVS,)):
+    count = 0
+    for node in net.nodes():
+        for c1 in collections:
+            for c2 in collections:
+                if label1 in net.node[node][c1] and label2 in net.node[node][c2]:
+                    count += 1
+    return count
+
+
+def count_adjacent_labels(net, label1, label2, collections=(mmln.OBSVS,)):
+    count = 0
+    for node1, node2 in net.edges():
+        for c1 in collections:
+            for c2 in collections:
+                if label1 in net.node[node1][c1] and label2 in net.node[node2][c2]:
+                    count += 1
+                if label2 in net.node[node1][c1] and label1 in net.node[node2][c2]:
+                    count += 1
+
+    if label1 == label2:
+        count /= 2
+    return count

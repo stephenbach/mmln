@@ -293,8 +293,8 @@ class _ADMMTwoVarBowlPotential(_ADMMPotential):
         self.local_copy2 = self.admm.eta * self.var2.value - self.lagrange2
         self.local_copy2 -= 2 * self.weight * self.coeff2 * self.const
 
-        a0 = 2 * self.weight * self.coeff1 * self.coeff1 + self.admm.eta
-        b1 = 2 * self.weight * self.coeff2 * self.coeff2 + self.admm.eta
+        a0 = 2 * self.weight * self.coeff1 ** 2 + self.admm.eta
+        b1 = 2 * self.weight * self.coeff2 ** 2 + self.admm.eta
         a1b0 = 2 * self.weight * self.coeff1 * self.coeff2
 
         self.local_copy2 -= a1b0 * self.local_copy1 / a0

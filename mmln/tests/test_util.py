@@ -19,6 +19,13 @@ class TestUtil(TestCase):
         all_labels = mmln.get_all_labels(net)
         self.assertEqual(len(all_labels), 2)
 
+    def test_prune_labels(self):
+        net = self._get_network()
+        mmln.prune_labels(net, {self.label1})
+        for node in range(1, 5):
+            self.assertEqual(len(net.node[node][mmln.OBSVS]), 1)
+            self.assertTrue(self.label1 in net.node[node][mmln.OBSVS])
+
     def _get_network(self):
         net = nx.Graph()
         net.add_node(1)

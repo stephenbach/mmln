@@ -40,10 +40,7 @@ class GroundingManager:
         self.logger.info('Added ' + str(len(self.variables)) + ' regularization weights. ' +
                          'Starting intra-node weights.')
         pots_set = 0
-        for label_pair, weight in self.m.intra_node_pos.items():
-            l1 = label_pair[0]
-            l2 = label_pair[1]
-
+        for (l1, l2), weight in self.m.intra_node_pos.items():
             for node in self.label_map[l1]:
                 var = self.variables[(node, l1)]
                 if mmln.TARGETS in self.n.node[node] and l2 in self.n.node[node][mmln.TARGETS]:
@@ -66,10 +63,7 @@ class GroundingManager:
         self.logger.info('Added ' + str(pots_set) + ' intra-node weights. ' +
                          'Starting non-default inter-node weights.')
         pots_set = 0
-        for label_pair, weight in self.m.inter_node_pos.items():
-            l1 = label_pair[0]
-            l2 = label_pair[1]
-
+        for (l1, l2), weight in self.m.inter_node_pos.items():
             for node in self.label_map[l1]:
                 var = self.variables[(node, l1)]
                 for other_node in self.n.neighbors(node):
