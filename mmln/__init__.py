@@ -3,7 +3,7 @@ OBSVS = 'mmln_observations'
 TARGETS = 'mmln_targets'
 TRUTH = 'mmln_truth'
 
-from .learn import Learner
+from .learn import Learner, HomophilyLearner
 from .model import Model
 from .predict import Predictor
 from .stats import estimate_p_values_inter_node

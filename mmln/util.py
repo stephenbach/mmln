@@ -76,13 +76,11 @@ def _make_target(network, node, label):
 
 def get_all_labels(net):
     all_labels = set()
-    for node in net.nodes():
-        if mmln.OBSVS in net.node[node]:
-            for label in net.node[node][mmln.OBSVS]:
-                all_labels.add(label)
-        if mmln.TARGETS in net.node[node]:
-            for label in net.node[node][mmln.TARGETS]:
-                all_labels.add(label)
+    for collection in (mmln.OBSVS, mmln.TARGETS, mmln.TRUTH):
+        for node in net.nodes():
+            if collection in net.node[node]:
+                for label in net.node[node][collection]:
+                    all_labels.add(label)
     return all_labels
 
 
@@ -94,35 +92,55 @@ def prune_labels(net, labels_to_keep):
                     del net.node[node][collection][label]
 
 
-def count_labels(net, label, collections=(mmln.OBSVS,)):
-    count = 0
-    for collection in collections:
-        for node in net.nodes():
-            if label in net.node[node][collection]:
-                count += 1
-    return count
-
-
-def count_coocurring_intra_node_labels(net, label1, label2, collections=(mmln.OBSVS,)):
+def count_labels(net, label):
     count = 0
     for node in net.nodes():
-        for c1 in collections:
-            for c2 in collections:
-                if label1 in net.node[node][c1] and label2 in net.node[node][c2]:
+        if mmln.OBSVS in net.node[node]:
+            if label in net.node[node][mmln.OBSVS]:
+                if net.node[node][mmln.OBSVS][label] == 1:
                     count += 1
+                elif net.node[node][mmln.OBSVS][label] != 0:
+                    raise Exception('Only values in {0, 1} are accepted observations. Found ' +
+                                    str(net.node[node][mmln.OBSVS][label]) +
+                                    ' for (' + str(node) + ', ' + str(label) + ')')
     return count
 
 
-def count_adjacent_labels(net, label1, label2, collections=(mmln.OBSVS,)):
+def count_coocurring_intra_node_labels(net, label1, label2):
+    count = 0
+    for node in net.nodes():
+        if _check_cooccurence(net, node, label1, node, label2):
+            count += 1
+    return count
+
+
+def count_adjacent_labels(net, label1, label2):
     count = 0
     for node1, node2 in net.edges():
-        for c1 in collections:
-            for c2 in collections:
-                if label1 in net.node[node1][c1] and label2 in net.node[node2][c2]:
-                    count += 1
-                if label2 in net.node[node1][c1] and label1 in net.node[node2][c2]:
-                    count += 1
+        if _check_cooccurence(net, node1, label1, node2, label2):
+            count += 1
+        elif _check_cooccurence(net, node1, label1, node2, label2):
+            count += 1
 
     if label1 == label2:
         count /= 2
     return count
+
+
+def _check_cooccurence(net, node1, label1, node2, label2):
+    if mmln.OBSVS in net.node[node1] and mmln.OBSVS in net.node[node2]:
+        if label1 in net.node[node1][mmln.OBSVS] and label2 in net.node[node2][mmln.OBSVS]:
+            obsv1 = net.node[node1][mmln.OBSVS][label1]
+            obsv2 = net.node[node2][mmln.OBSVS][label2]
+            if obsv1 == 1 and obsv2 == 1:
+                return True
+            elif obsv1 != 0 and obsv1 != 1:
+                raise Exception('Only values in {0, 1} are accepted observations. Found ' +
+                                str(net.node[node1][mmln.OBSVS][label1]) +
+                                ' for (' + str(node1) + ', ' + str(label1) + ')')
+            elif obsv2 != 0 and obsv2 != 1:
+                raise Exception('Only values in {0, 1} are accepted observations. Found ' +
+                                str(net.node[node1][mmln.OBSVS][label1]) +
+                                ' for (' + str(node2) + ', ' + str(label2) + ')')
+
+    return False

@@ -12,7 +12,6 @@ class Predictor:
         self.n = network
         self.all_labels = mmln.get_all_labels(network)
         self.predict_done = False
-
         self.logger = logging.getLogger(__name__)
 
     def predict(self, model, inf=None):
