@@ -14,6 +14,16 @@ class TestUtil(TestCase):
         folds = mmln.make_stratified_k_folds(net, seed=271828)
         self.assertEqual(len(folds), 2)
 
+        self.assertTrue(self.label2 in folds[0].node[2][mmln.TARGETS])
+        self.assertTrue(self.label1 in folds[0].node[3][mmln.TARGETS])
+        self.assertTrue(self.label2 in folds[0].node[4][mmln.TARGETS])
+        self.assertTrue(self.label1 in folds[0].node[4][mmln.TARGETS])
+
+        self.assertTrue(self.label2 in folds[1].node[1][mmln.TARGETS])
+        self.assertTrue(self.label1 in folds[1].node[1][mmln.TARGETS])
+        self.assertTrue(self.label1 in folds[1].node[2][mmln.TARGETS])
+        self.assertTrue(self.label2 in folds[1].node[3][mmln.TARGETS])
+
     def test_get_all_labels(self):
         net = self._get_network()
         all_labels = mmln.get_all_labels(net)

@@ -8,6 +8,10 @@ def make_stratified_k_folds(net, k=None, seed=None):
         random.seed(seed)
 
     all_labels = get_all_labels(net)
+    all_labels = list(all_labels)
+    # Sort for reproducibility
+    all_labels.sort()
+
     label_map_pos = {}
     label_map_neg = {}
     for label in all_labels:
