@@ -19,7 +19,7 @@ class Predictor:
         if inf is None:
             inf = mmln.infer.HLMRF()
         manager = mmln.ground.GroundingManager(model, self.n, self.all_labels, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
 
         self.logger.info('Inference set up. Starting inference.')
         inf.infer()

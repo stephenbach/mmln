@@ -26,14 +26,24 @@ class GroundingManager:
                     self.variables[(node, label)] = mmln.infer.Variable((node, label))
                     self.label_map[label].add(node)
 
+        # Initializes data structure mapping rules to potentials
+        self.rule_map = []
+
     def get_value(self, node, label):
         if (node, label) in self.variables:
             return self.variables[(node, label)].value
         else:
             raise Exception('(' + node + ', ' + label + ') is not a target.')
 
-    def add_all_weights(self):
-        self.logger.info('Adding all weights. Starting with regularization.')
+    def init_all_weights(self):
+        if len(self.rule_map) > 0:
+            self.logger.info('Weights already set. Zeroing all potential weights before initializing.')
+            for rule in self.rule_map:
+                for pot in rule:
+                    pass
+            self.rule_map = []
+
+        self.logger.info('Initializing all weights. Starting with regularization.')
         for var in self.variables.values():
             self.inf.add_weight(self.m.regularization, 1, var, -0.5, two_sided=True, squared=True)
 
@@ -104,4 +114,4 @@ class GroundingManager:
                             pots_set += 1
 
         self.logger.info('Added ' + str(pots_set) + ' default inter-node weights. ' +
-                         'Done adding weights.')
+                         'Done initializing weights.')

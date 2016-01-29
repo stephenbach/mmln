@@ -37,7 +37,7 @@ class TestGroundingManager(TestCase):
 
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1, self.label2}, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
         self.assertEqual(len(inf.pots), 12)
         self.assertEqual(inf.set_weight_count, 12)
 
@@ -46,7 +46,7 @@ class TestGroundingManager(TestCase):
 
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1, self.label2}, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
         self.assertEqual(len(inf.pots), 14)
         self.assertEqual(inf.set_weight_count, 14)
 
@@ -55,7 +55,7 @@ class TestGroundingManager(TestCase):
 
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1, self.label2}, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
         self.assertEqual(len(inf.pots), 18)
         self.assertEqual(inf.set_weight_count, 18)
 
@@ -77,7 +77,7 @@ class TestGroundingManager(TestCase):
 
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1}, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
         self.assertEqual(len(inf.pots), 6)
         self.assertEqual(inf.set_weight_count, 6)
 
@@ -102,7 +102,7 @@ class TestGroundingManager(TestCase):
 
         inf = _FakeInference()
         manager = mmln.ground.GroundingManager(model, net, {self.label1, self.label2}, inf)
-        manager.add_all_weights()
+        manager.init_all_weights()
         self.assertEqual(len(inf.pots), 24)
         self.assertEqual(inf.set_weight_count, 24)
 
