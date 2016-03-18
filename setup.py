@@ -10,6 +10,8 @@ setup(name='mmln',
       packages=['mmln'],
       install_requires=[
             'networkx',
-            'scikit-learn'
+            'numpy',
+            'scikit-learn',
+            'scipy'
       ],
       zip_safe=False)
