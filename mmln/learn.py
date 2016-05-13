@@ -1,7 +1,6 @@
 import logging
 
 import mmln
-import mmln.infer
 import mmln.ground
 
 

@@ -6,7 +6,6 @@ import sklearn.metrics
 
 import mmln
 import mmln.ground
-import mmln.infer
 
 
 class AbstractPredictor:

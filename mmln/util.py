@@ -3,7 +3,7 @@ import random
 import mmln
 
 
-def make_stratified_k_folds(net, k=None, seed=None):
+def make_stratified_k_folds(net, k=None, seed=None, mix_classes=True):
     if seed is not None:
         random.seed(seed)
 
