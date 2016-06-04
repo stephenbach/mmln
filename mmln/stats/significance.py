@@ -3,9 +3,9 @@ import random
 import mmln
 
 
-def estimate_p_values_inter_node(net, n_samples=1000, seed=271828):
+def estimate_attachment_p_values(net, n_samples=1000, seed=271828):
     random.seed(seed)
-    labels = list(mmln.get_all_labels(net))
+    labels = list(mmln.util.get_all_labels(net))
 
     p = {}
     for label in labels:
@@ -15,12 +15,12 @@ def estimate_p_values_inter_node(net, n_samples=1000, seed=271828):
         label1 = labels[i]
         for j in range(i, len(labels)):
             label2 = labels[j]
-            obsv = mmln.count_adjacent_labels(net, label1, label2)
-            n_label1 = mmln.count_labels(net, label1)
+            obsv = mmln.util.count_adjacent_labels(net, label1, label2)
+            n_label1 = mmln.util.count_labels(net, label1)
             if label1 == label2:
                 n_label2 = n_label1
             else:
-                n_label2 = mmln.count_labels(net, label2)
+                n_label2 = mmln.util.count_labels(net, label2)
 
             # Results at least as high as obsv
             pos = 0

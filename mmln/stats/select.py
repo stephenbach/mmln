@@ -1,14 +1,14 @@
+import mmln
+
 import math
 import networkx as nx
 import numpy as np
 import scipy.sparse
 import sklearn.linear_model
 
-import mmln
-
 
 def select_model_logistic_regression(net, weight_epsilon=1e-3, regularization=1.0):
-    all_labels = mmln.get_all_labels(net)
+    all_labels = mmln.util.get_all_labels(net)
     all_labels = list(all_labels)
     # Sort for reproducibility
     all_labels.sort()
@@ -23,13 +23,15 @@ def select_model_logistic_regression(net, weight_epsilon=1e-3, regularization=1.
         row = 0
         for node in net.nodes():
             y[row] = 1.0 if all_labels[i] in net.node[node][mmln.OBSVS] \
-                            and net.node[node][mmln.OBSVS][all_labels[i]] == 1 else 0.0
+                            and net.node[node][mmln.OBSVS][all_labels[i]] == 1 else -1.0
             for j in range(len(all_labels)):
                 count = 0
                 for neighbor in nx.neighbors(net, node):
                     if all_labels[j] in net.node[neighbor][mmln.OBSVS] \
                             and net.node[neighbor][mmln.OBSVS][all_labels[j]] == 1:
                         count += 1
+                    else:
+                        count -= 1
                 X[row, j] = float(count)
             row += 1
         X = scipy.sparse.csr_matrix(X)

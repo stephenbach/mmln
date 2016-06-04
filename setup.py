@@ -7,7 +7,7 @@ setup(name='mmln',
       author='Stephen Bach',
       author_email='bach@cs.stanford.edu',
       license='Apache Software License',
-      packages=['mmln'],
+      packages=['mmln', 'mmln.model', 'mmln.stats', 'mmln.util'],
       install_requires=[
             'networkx',
             'numpy',

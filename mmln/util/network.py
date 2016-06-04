@@ -1,6 +1,6 @@
-import random
-
 import mmln
+
+import random
 
 
 def make_stratified_k_folds(net, k=None, seed=None, mix_classes=True):
