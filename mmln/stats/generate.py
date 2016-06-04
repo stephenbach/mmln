@@ -12,7 +12,7 @@ def generate_mmln(weights, all_labels, n_nodes, n_edges_per_node, gibbs_steps=10
     for label in all_labels:
         intra_weight_map[label] = {}
         inter_weight_map[label] = {}
-    for weight_type, weight_map in ((mmln.model.INTRA, intra_weight_map), (mmln.model.INTER, inter_weight_map)):
+    for weight_type, weight_map in ((mmln.INTRA, intra_weight_map), (mmln.INTER, inter_weight_map)):
         for (l1, l2), weight in weights[weight_type].items():
             weight_map[l1][l2] = weight
             weight_map[l2][l1] = weight
@@ -53,7 +53,7 @@ def generate_mmln(weights, all_labels, n_nodes, n_edges_per_node, gibbs_steps=10
                                 score_1 -= weight
 
                     # Sets label
-                    net.node[node][mmln.OBSVS][label] = 1.0 if random.random() < math.exp(score_1) / (math.exp(score_1) + math.exp(score_0)) else 0.0
+                    net.node[node][mmln.OBSVS][label] = 1.0 if random.random() < 1 / (1 + math.exp(score_0 - score_1)) else 0.0
 
         return net
 
@@ -61,16 +61,16 @@ def generate_mmln(weights, all_labels, n_nodes, n_edges_per_node, gibbs_steps=10
 def generate_weights(all_labels, intra_density, inter_density):
     all_labels = sorted(all_labels)
 
-    model = mmln.model.Weights()
+    model = mmln.Weights()
 
     for i in range(len(all_labels)):
         for j in range(i+1, len(all_labels)):
             if random.random() < intra_density:
-                model[mmln.model.INTRA][(all_labels[i], all_labels[j])] = 1.0 if random.random() < 0.5 else -1.0
+                model[mmln.INTRA][(all_labels[i], all_labels[j])] = 1.0 if random.random() < 0.5 else -1.0
 
     for i in range(len(all_labels)):
         for j in range(i, len(all_labels)):
             if random.random() < inter_density:
-                model[mmln.model.INTER][(all_labels[i], all_labels[j])] = 1.0 if random.random() < 0.5 else -1.0
+                model[mmln.INTER][(all_labels[i], all_labels[j])] = 1.0 if random.random() < 0.5 else -1.0
 
     return model

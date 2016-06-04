@@ -5,7 +5,7 @@ import scipy.sparse
 import scipy.sparse.linalg
 
 
-class LabelProp(mmln.model.AbstractModel):
+class LabelProp(mmln.AbstractModel):
 
     def __init__(self, lam=1.0):
         self.lam = lam
@@ -36,7 +36,7 @@ class LabelProp(mmln.model.AbstractModel):
         solve = scipy.sparse.linalg.factorized(L)
 
         self.logger.info('Inference set up. Starting inference.')
-        for label in mmln.util.get_all_labels(network):
+        for label in mmln.get_all_labels(network):
             y = np.zeros(network.number_of_nodes())
 
             for node in network.nodes():

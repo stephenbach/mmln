@@ -4,7 +4,7 @@ import os
 import struct
 
 
-class MRF(mmln.model.AbstractModel):
+class MRF(mmln.AbstractModel):
 
     def __init__(self, weights, n_samples=5000, n_learning_epochs = 100, temp_dir='./predict.temp'):
         super(MRF, self).__init__()
@@ -40,7 +40,7 @@ class MRF(mmln.model.AbstractModel):
                 results.append(line.strip().split()[1])
         if len(results) != self.weights.size():
             raise RuntimeError("DimmWitted output an unexpected number of weights.")
-        for weight_type in (mmln.model.OTHER, mmln.model.INTER, mmln.model.INTRA):
+        for weight_type in (mmln.OTHER, mmln.INTER, mmln.INTRA):
             for key, index in weight_map[weight_type].items():
                 self.weights[weight_type][key] = results[index]
 
@@ -107,10 +107,10 @@ class MRF(mmln.model.AbstractModel):
         return var_map
 
     def write_weights(self):
-        weight_map = mmln.model.Weights()
+        weight_map = mmln.Weights()
 
         with open(self.weights_file, 'wb') as f:
-            for weight_type in (mmln.model.OTHER, mmln.model.INTER, mmln.model.INTRA):
+            for weight_type in (mmln.OTHER, mmln.INTER, mmln.INTRA):
                 for key, value in self.weights[weight_type].items():
                     write_weight(f, weight_map.size(), False, value)
                     weight_map[weight_type][key] = weight_map.size()
@@ -130,9 +130,9 @@ class MRF(mmln.model.AbstractModel):
                                 if label_type_2 in network.nodes[node2]:
                                     for label2 in network.nodes[node2][label_type_2]:
                                         if label1 <= label2:
-                                            wid = weight_map[mmln.model.INTER][(label1, label2)]
+                                            wid = weight_map[mmln.INTER][(label1, label2)]
                                         else:
-                                            wid = weight_map[mmln.model.INTER][(label2, label1)]
+                                            wid = weight_map[mmln.INTER][(label2, label1)]
                                         vid1 = var_map[(node1, label1)]
                                         vid2 = var_map[(node2, label2)]
                                         write_pairwise_equal_factor(f, wid, vid1, vid2)
