@@ -4,11 +4,11 @@ import sklearn.metrics
 
 
 def get_per_label_score(network, metric=sklearn.metrics.roc_auc_score):
-    predictions = get_per_label_predictions()
+    predictions = get_per_label_predictions(network)
 
     # Computes scores
     scores = {}
-    for label in mmln.util.get_all_labels(network):
+    for label in mmln.get_all_labels(network):
         y_true = []
         y = []
         for node, prediction in predictions[label].items():
@@ -21,7 +21,7 @@ def get_per_label_score(network, metric=sklearn.metrics.roc_auc_score):
 
 def get_per_label_predictions(network):
     predictions = {}
-    for label in mmln.util.get_all_labels(network):
+    for label in mmln.get_all_labels(network):
         predictions[label] = {}
 
     for node in network.nodes():

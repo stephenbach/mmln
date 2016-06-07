@@ -33,7 +33,6 @@ class LabelProp(mmln.AbstractModel):
                 total_weight += network.edge[node][neighbor]['weight']
             L[node_indices[node], node_indices[node]] = 1 + self.lam * total_weight
         L = scipy.sparse.csc_matrix(L)
-        solve = scipy.sparse.linalg.factorized(L)
 
         self.logger.info('Inference set up. Starting inference.')
         for label in mmln.get_all_labels(network):
@@ -43,7 +42,9 @@ class LabelProp(mmln.AbstractModel):
                 if mmln.OBSVS in network.node[node] and label in network.node[node][mmln.OBSVS]:
                     y[node_indices[node]] = network.node[node][mmln.OBSVS][label]
 
-            f = solve(y)
+            f, info = scipy.sparse.linalg.cg(L, y)
+            if info != 0:
+                raise RuntimeError("Conjugate gradient did not converge.")
 
             for node in network.nodes():
                 if mmln.TARGETS in network.node[node] and label in network.node[node][mmln.TARGETS]:

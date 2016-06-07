@@ -6,7 +6,7 @@ import struct
 
 class MRF(mmln.AbstractModel):
 
-    def __init__(self, weights, n_samples=5000, n_learning_epochs = 100, temp_dir='./predict.temp'):
+    def __init__(self, weights, n_samples=5000, n_learning_epochs=100, temp_dir='./predict.temp'):
         super(MRF, self).__init__()
         self.weights = weights
         self.n_samples = n_samples
@@ -39,7 +39,8 @@ class MRF(mmln.AbstractModel):
             for line in f:
                 results.append(line.strip().split()[1])
         if len(results) != self.weights.size():
-            raise RuntimeError("DimmWitted output an unexpected number of weights.")
+            raise RuntimeError("DimmWitted output an unexpected number of weights. Expected=" +
+                               str(self.weights.size()) + ", Actual=" + str(len(results)))
         for weight_type in (mmln.OTHER, mmln.INTER, mmln.INTRA):
             for key, index in weight_map[weight_type].items():
                 self.weights[weight_type][key] = results[index]
@@ -48,7 +49,7 @@ class MRF(mmln.AbstractModel):
 
     def predict(self, network):
         self.logger.info('Starting prediction. Writing out model.')
-        var_map = self.write_vars_for_prediction(network)
+        var_map, target_vars = self.write_vars_for_prediction(network)
         weight_map = self.write_weights()
         n_factors, n_edges = self.write_factors(network, var_map, weight_map)
         with open(self.meta_file, 'w') as f:
@@ -56,20 +57,22 @@ class MRF(mmln.AbstractModel):
 
         self.logger.info('Model written. Calling DimmWitted.')
         value = os.system("dw gibbs -q  -m " + self.meta_file + " -w " + self.weights_file + " -v " + self.vars_file +
-                          " -f " + self.factors_file + " --n_learning_epoch 0 --n_inference_epoch " + str(self.n_samples) +
-                          " --n_samples_per_learning_epoch 0 -o " + self.temp_dir)
+                          " -f " + self.factors_file + " --n_learning_epoch 0 --n_inference_epoch " +
+                          str(self.n_samples) + " --n_samples_per_learning_epoch 0 -o " + self.temp_dir)
         if value != 0:
             raise RuntimeError("DimmWitted finished with nonzero exit code.")
 
         self.logger.info('DimmWitted finished. Collecting the results.')
-        results = []
+        results = {}
         with open(self.temp_dir + '/inference_result.out.text', 'r') as f:
             for line in f:
-                results.append(line.strip().split()[2])
-        if len(results) != len(var_map):
-            raise RuntimeError("DimmWitted output an unexpected number of variables.")
-        for (node, label), index in var_map:
-            network.nodes.node[mmln.TARGETS][label] = results[index]
+                row = line.strip().split()
+                results[int(row[0])] = float(row[2])
+        if len(results) != len(target_vars):
+            raise RuntimeError("DimmWitted output an unexpected number of variables. Expected=" +
+                               str(len(target_vars)) + ", Actual=" + str(len(results)))
+        for (node, label) in target_vars:
+            network.node[node][mmln.TARGETS][label] = results[var_map[(node, label)]]
 
         self.logger.info('Prediction done.')
 
@@ -78,12 +81,7 @@ class MRF(mmln.AbstractModel):
 
         with open(self.vars_file, 'wb') as f:
             for node in network.nodes():
-                # Observations
-                if mmln.OBSVS in network.node[node]:
-                    for label, value in network.node[node][mmln.OBSVS].items():
-                        write_variable(f, len(var_map), False, True, value)
-                        var_map[(node, label)] = len(var_map)
-                # Targets
+                # mmln.TARGETS
                 has_truth = mmln.TRUTH in network.node[node]
                 if mmln.TARGETS in network.node[node]:
                     for label in network.node[node][mmln.TARGETS]:
@@ -92,19 +90,32 @@ class MRF(mmln.AbstractModel):
                         else:
                             write_variable(f, len(var_map), False, False, 0.0)
                         var_map[(node, label)] = len(var_map)
+                # mmln.OBSVS
+                if mmln.OBSVS in network.node[node]:
+                    for label, value in network.node[node][mmln.OBSVS].items():
+                        write_variable(f, len(var_map), False, True, value)
+                        var_map[(node, label)] = len(var_map)
+
         return var_map
 
     def write_vars_for_prediction(self, network):
         var_map = {}
+        target_vars = []
 
         with open(self.vars_file, 'wb') as f:
             for node in network.nodes():
-                for label_type in (mmln.TARGETS, mmln.OBSVS):
-                    if label_type in network.nodes[node]:
-                        for label, value in network.nodes[node][label_type].items():
-                            write_variable(f, len(var_map), False, label_type == mmln.OBSVS, value)
-                            var_map[(node, label)] = len(var_map)
-        return var_map
+                # mmln.TARGETS
+                if mmln.TARGETS in network.node[node]:
+                    for label, value in network.node[node][mmln.TARGETS].items():
+                        write_variable(f, len(var_map), False, False, value)
+                        var_map[(node, label)] = len(var_map)
+                        target_vars.append((node, label))
+                # mmln.OBSVS
+                if mmln.OBSVS in network.node[node]:
+                    for label, value in network.node[node][mmln.OBSVS].items():
+                        write_variable(f, len(var_map), False, True, value)
+                        var_map[(node, label)] = len(var_map)
+        return var_map, target_vars
 
     def write_weights(self):
         weight_map = mmln.Weights()
@@ -124,20 +135,25 @@ class MRF(mmln.AbstractModel):
             # Inter-node dependencies
             for node1, node2 in network.edges():
                 for label_type_1 in (mmln.TARGETS, mmln.OBSVS):
-                    if label_type_1 in network.nodes[node1]:
-                        for label1 in network.nodes[node1][label_type_1]:
+                    if label_type_1 in network.node[node1]:
+                        for label1 in network.node[node1][label_type_1]:
                             for label_type_2 in (mmln.TARGETS, mmln.OBSVS):
-                                if label_type_2 in network.nodes[node2]:
-                                    for label2 in network.nodes[node2][label_type_2]:
-                                        if label1 <= label2:
+                                if label_type_2 in network.node[node2]:
+                                    for label2 in network.node[node2][label_type_2]:
+                                        wid = None
+                                        if label1 <= label2 and (label1, label2) in weight_map[mmln.INTER]:
                                             wid = weight_map[mmln.INTER][(label1, label2)]
-                                        else:
+                                        elif (label2, label1) in weight_map[mmln.INTER]:
                                             wid = weight_map[mmln.INTER][(label2, label1)]
-                                        vid1 = var_map[(node1, label1)]
-                                        vid2 = var_map[(node2, label2)]
-                                        write_pairwise_equal_factor(f, wid, vid1, vid2)
-                                        n_factors += 1
-                                        n_edges += 2
+                                        elif mmln.DEFAULT in weight_map[mmln.OTHER]:
+                                            wid = weight_map[mmln.OBSVS][mmln.OTHER]
+
+                                        if wid is not None:
+                                            vid1 = var_map[(node1, label1)]
+                                            vid2 = var_map[(node2, label2)]
+                                            write_pairwise_equal_factor(f, wid, vid1, vid2)
+                                            n_factors += 1
+                                            n_edges += 2
         return n_factors, n_edges
 
 
