@@ -1,6 +1,7 @@
 import mmln
 
-import os
+import subprocess
+import random
 import struct
 
 
@@ -26,18 +27,17 @@ class MRF(mmln.AbstractModel):
             write_metadata(f, weight_map.size(), len(var_map), n_factors, n_edges)
 
         self.logger.info('Model written. Calling DimmWitted.')
-        value = os.system("dw gibbs -q  -m " + self.meta_file + " -w " + self.weights_file + " -v " + self.vars_file +
-                          " -f " + self.factors_file + " --n_learning_epoch " + str(self.n_learning_epochs) +
-                          " --n_inference_epoch 0 --n_samples_per_learning_epoch " + str(self.n_samples) +
-                          " -o " + self.temp_dir)
-        if value != 0:
-            raise RuntimeError("DimmWitted finished with nonzero exit code.")
+        output = subprocess.check_output(['dw', 'gibbs', '-q', '-m',self.meta_file, '-w', self.weights_file, '-v',
+                                          self.vars_file, '-f', self.factors_file, '--n_learning_epoch',
+                                          str(self.n_learning_epochs), '--n_inference_epoch 0',
+                                          '--n_samples_per_learning_epoch', str(self.n_samples), '-o', self.temp_dir])
+        self.logger.debug(output)
 
         self.logger.info('DimmWitted finished. Collecting the results.')
         results = []
         with open(self.temp_dir + '/inference_result.out.weights.text', 'r') as f:
             for line in f:
-                results.append(line.strip().split()[1])
+                results.append(float(line.strip().split()[1]))
         if len(results) != self.weights.size():
             raise RuntimeError("DimmWitted output an unexpected number of weights. Expected=" +
                                str(self.weights.size()) + ", Actual=" + str(len(results)))
@@ -56,11 +56,11 @@ class MRF(mmln.AbstractModel):
             write_metadata(f, weight_map.size(), len(var_map), n_factors, n_edges)
 
         self.logger.info('Model written. Calling DimmWitted.')
-        value = os.system("dw gibbs -q  -m " + self.meta_file + " -w " + self.weights_file + " -v " + self.vars_file +
-                          " -f " + self.factors_file + " --n_learning_epoch 0 --n_inference_epoch " +
-                          str(self.n_samples) + " --n_samples_per_learning_epoch 0 -o " + self.temp_dir)
-        if value != 0:
-            raise RuntimeError("DimmWitted finished with nonzero exit code.")
+        output = subprocess.check_output(['dw', 'gibbs', '-q', '-m', self.meta_file, '-w', self.weights_file, '-v',
+                                          self.vars_file, '-f', self.factors_file, '--n_learning_epoch 0',
+                                          '--n_inference_epoch', str(self.n_samples),
+                                          '--n_samples_per_learning_epoch 0', '-o', self.temp_dir])
+        self.logger.debug(output)
 
         self.logger.info('DimmWitted finished. Collecting the results.')
         results = {}
@@ -88,7 +88,7 @@ class MRF(mmln.AbstractModel):
                         if has_truth and label in network.node[node][mmln.TRUTH]:
                             write_variable(f, len(var_map), True, False, network.node[node][mmln.TRUTH][label])
                         else:
-                            write_variable(f, len(var_map), False, False, 0.0)
+                            write_variable(f, len(var_map), False, False, bool(random.getrandbits(1)))
                         var_map[(node, label)] = len(var_map)
                 # mmln.OBSVS
                 if mmln.OBSVS in network.node[node]:
@@ -107,7 +107,7 @@ class MRF(mmln.AbstractModel):
                 # mmln.TARGETS
                 if mmln.TARGETS in network.node[node]:
                     for label, value in network.node[node][mmln.TARGETS].items():
-                        write_variable(f, len(var_map), False, False, value)
+                        write_variable(f, len(var_map), False, False, bool(random.getrandbits(1)))
                         var_map[(node, label)] = len(var_map)
                         target_vars.append((node, label))
                 # mmln.OBSVS

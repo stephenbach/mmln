@@ -41,8 +41,8 @@ def make_stratified_k_folds(net, k=None, seed=None, mix_classes=True):
         k = minimum
     elif k > minimum:
         min_type = 'positive' if len(label_map_pos[min_label]) == minimum else 'negative'
-        raise Exception('Asked for ' + str(k) + ' folds, but label ' + min_label + ' has only ' + str(minimum) +
-                        ' ' + min_type + ' instances')
+        raise Exception('Asked for ' + str(k) + ' folds, but label ' + str(min_label) + ' has only ' + str(minimum) +
+                        ' ' + str(min_type) + ' instances')
 
     folds = []
     for i in range(0, k):
@@ -51,9 +51,13 @@ def make_stratified_k_folds(net, k=None, seed=None, mix_classes=True):
             folds[i].node[node][mmln.TARGETS] = {}
             folds[i].node[node][mmln.TRUTH] = {}
 
+    node_sets = [None, None]
+
     for label in all_labels:
-        for node_set in (label_map_pos[label], label_map_neg[label]):
-            node_list = list(node_set)
+        node_sets[0] = label_map_neg[label]
+        node_sets[1] = label_map_pos[label]
+        for i in (0, 1):
+            node_list = list(node_sets[i])
             # Always sorts before shuffling for reproducibility
             node_list.sort()
             if len(node_list) < 2000:

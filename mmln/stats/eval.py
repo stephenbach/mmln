@@ -26,7 +26,7 @@ def get_per_label_predictions(network):
 
     for node in network.nodes():
         if mmln.TARGETS in network.node[node]:
-            for label in network.node[node][mmln.TARGETS]:
-                predictions[label][node] = network.node[node][mmln.TARGETS][label]
+            for label, value in network.node[node][mmln.TARGETS].items():
+                predictions[label][node] = value
 
     return predictions

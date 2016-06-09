@@ -6,6 +6,7 @@ from .model.weights import Weights, OTHER, INTER, INTRA, DEFAULT
 from .stats.eval import get_per_label_score, get_per_label_predictions
 from .stats.generate import generate_mmln, generate_weights
 from .stats.select import select_model_logistic_regression, is_sign_consistent
+from .stats.select import select_model_logistic_regression_parallel
 from .stats.significance import estimate_attachment_p_values
 
 from .util.network import make_stratified_k_folds, get_all_labels, count_labels, count_adjacent_labels
